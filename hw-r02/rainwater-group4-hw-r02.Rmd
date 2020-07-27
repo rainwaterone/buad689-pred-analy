@@ -1,0 +1,97 @@
+<!-- R Commander Markdown Template -->
+
+BUAD 689 Group 4 R Homework #2
+=======================
+
+### Lee Rainwater
+
+### `r as.character(Sys.Date())`
+
+```{r echo=FALSE}
+# include this code chunk as-is to set options
+knitr::opts_chunk$set(comment=NA, prompt=TRUE, out.width=750, fig.height=8, fig.width=8)
+library(Rcmdr)
+library(car)
+library(RcmdrMisc)
+```
+
+
+```{r echo=FALSE}
+# include this code chunk as-is to enable 3D graphs
+library(rgl)
+knitr::knit_hooks$set(webgl = hook_webgl)
+```
+
+
+
+{catalog <-
+} {read.table("C:/Users/edwar/OneDrive - Texas A&M University/Summer-2020/buad689-pred-analy/hw-r02/Catalogs.csv",
+} {header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
+}```
+
+
+
+{LinearModel.1 <- lm(AmountSpent ~ Children + Salary,
+} {data=catalog)
+}```
+
+
+```{r}
+summary(LinearModel.1)
+```
+
+
+
+
+{LinearModel.1 <- lm(AmountSpent ~ Children + Salary,
+} {data=catalog)
+}```
+
+```{r}
+summary(LinearModel.1)
+```
+# Observations
+Salary shows to be a significant predictor of AmountSpent because the probability of exceeding the t value is less than .05. Salary and number of children do not have the same relation to AmountSpent as evidenced by their very different coefficients.
+
+
+{catalog$logAmountSpent <-
+} {with(catalog, log(AmountSpent))
+}```
+
+
+
+{catalog$logSalary <-
+} {with(catalog, log(Salary))
+}```
+
+
+```{r}
+scatterplot(logAmountSpent~logSalary | Location, regLine=TRUE, smooth=FALSE,
+   boxplots=FALSE, by.groups=TRUE, data=catalog)
+```
+# Observations on logAmountSpent vs. logSalary
+Performing a log-log transformation eliminates most of the heteroscedasticity in the relationship; however, there still remains some skewness in the distribution about the regression line.
+Grouping the data by Location shows that most of the skewness is associated with the Close level of the Location factor.
+The slopes of the regression lines for the two levels are nearly, but not quite equal. The intercept for the observations associated with the Far level is slightly above that for the Close level.
+
+# Regression of AmountSpent against History
+
+```{r}
+LinearModel.History <- lm(AmountSpent ~ History, data=catalog)
+summary(LinearModel.History)
+```
+
+Regressing AmountSpent against History reveals all three levels of History to be significant predictors. History[T.Low] is the variable representing the Low level of the History factor.
+Being a factor of a categorical variable, the sum of the coefficient value of History[T.Low] and the intercept provides the mean value of all observations for which the value of History is Low.
+
+# Regression of AmountSpent against History and Salary, Accounting for Interaction
+```{r}
+LinearModel.2 <- lm(AmountSpent ~ History +Salary +History*Salary, 
+  data=catalog)
+summary(LinearModel.2)
+```
+
+The above model includes an interaction term for History and Salary. Compared to the History-only model, the adjusted R2 increases from 0.4588 to 0.6631, indicating that the revised model accounts for an additional 20+ percentage points of variance.
+The Salary coefficient of 0.017233 may be interpreted such that each dollar of additional salary produces an additional 1.7 cents of catalog spending.
+For each level of History, the dollar amount of salary, multiplied by the coefficient associated with that level of History, produces the additional amount of dollar sales for that combination. In the case of History = Low and History = Medium, the presence of negative coefficients indicates that the ordering habits of customers with higher salaries with low medium order histories is even more negatively influenced than those of customers with lower salaries.
+
