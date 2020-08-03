@@ -1,3 +1,10 @@
+---
+title: "BUAD 689 Final Exam"
+author: "E. Lee Rainwater"
+date: "8/2/2020"
+output: pdf_document
+---
+
 requiredPackages = c(
   "naivebayes", "magrittr", "colorspace",
   "tidyverse", "ggplot2",  "e1071",
@@ -13,12 +20,16 @@ requiredPackages = c(
   'caret', 'EnvStats', 'randomForest',
   'rattle', 'RGtk2', 'rpart', 'tidytable',
   'tidyverse', 'MASS', 'ISwR',
-  "astsa", "magrittr", "Hmisc"
+  "astsa", "magrittr", "Hmisc",
+  "tidyverse", "psych"
 )
 for(p in requiredPackages){
   if(!require(p,character.only = TRUE)) install.packages(p)
   library(p,character.only = TRUE)
 }
+
+workingDir = 'C:/Users/rainwater-e/OneDrive - Texas A&M University/Summer-2020/buad689-pred-analy/final/'
+setwd(workingDir)
 
 #Display Regssion model statistics and anova table
 display_regression_metrics <- function(model) {
@@ -35,6 +46,39 @@ display_regression_metrics <- function(model) {
   plot(model)
 }
 
+#Function to calclate mode
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+#function print output of skewness direction
+getSkewType <- function(nmean, mmode) {
+  skewDirection <- "Not Skewed"
+  if (nmean < mmode) {
+    skewDirection <- "Negative Or Left Skewed"
+  }
+  else if (nmean > mmode) {
+    skewDirection <- "Positive or right skewed"
+  }
+  else if (nmean == mmode) {
+    skewDirection <- "Normal or not skewed"
+  }
+  return(skewDirection)
+}
+
+getColStats <- function(columns, csvData) {
+  for (value in columns) {
+    print(value)
+    cat("Mode: ", getmode(csvData[, value]), "\n")
+    cat("Median: ", median(csvData[, value]), "\n")
+    cat("Min: ", min(csvData[, value]), "\n")
+    cat("Max: ", max(csvData[, value]), "\n")
+    cat("Mean: ", mean(csvData[, value]), "\n")
+    cat("Skewness: ", skew(csvData[, value]), "\n")
+    cat("Direction: ", getSkewType(mean(csvData[, value]),
+                                   getmode(csvData[, value])), "\n")
+  }
+}
 
 #start Rattle
 rattle()
@@ -42,13 +86,13 @@ rattle()
 library("Rcmdr")
 
 Catalogs <-
-  read.csv("C:/Users/coleman-c/Desktop/Summer 2020/Applied Analytics/R/Catalogs.csv")
+  read.csv("Catalogs.csv")
 Stocks <-
   read.csv(
-    "C:/Users/coleman-c/Desktop/Summer 2020/Applied Analytics/R/GrpHW2.StockPrice.csv"
+    "GrpHW2.StockPrice.csv"
   )
 TS <-
-  read.csv("C:/Users/coleman-c/Desktop/Summer 2020/Applied Analytics/R/GrpHW2_ts.csv")
+  read.csv("GrpHW2_ts.csv")
 Catalogs <- mutate_if(Catalogs, is.character, as.factor)
 
 
@@ -77,6 +121,10 @@ display_regression_metrics(model.History_LOGSalary)
 
 print(2.718 ^ 0.55875)
 print(2.718 ^ -0.21708)
+
+# Extract the coefficent for log(Salary):
+b_log_salary = coef(summary(model.History_LOGSalary))["log(Salary)","Estimate"]
+print(exp(b_log_salary))
 
 #Question2
 
