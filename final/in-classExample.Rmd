@@ -41,11 +41,6 @@ for(p in requiredPackages){
 
 Import the data file that has quarterly percentage changes in US consumption expenditure data and name it as "us.perchange"
 
-```{r}
-
-```
-
-```{r} 
 us.perchange <- 
   read.csv('US.perchange.csv')
 ```
