@@ -37,8 +37,7 @@ scatterplotMatrix(~Bsmt_SF+First_Flr_SF+Lot_Area+Sales_Price+Second_Flr_SF,
                   data=amesHousingFactored)
 
 # Generate the pairs plot
-crs$dataset[crs$train,] %>%
-  dplyr::mutate(Zoning=as.factor(Zoning)) %>%
+amesHousingFactored %>%
   GGally::ggpairs(columns=c(4,11),
                   mapping=ggplot2::aes(colour=Zoning, alpha=0.5),
                   diag=list(continuous="density",
@@ -89,3 +88,32 @@ predSalesPrice = 10^yhat
 stdError <- summary(amesHousingLinRegLogLog)$sigma
 upperConfValue <- 10^(yhat + 2*stdError)
 lowerConfValue <- 10^(yhat - 2*stdError)
+
+#Clay's last-minute model:
+model3 <-
+  lm(
+    log_Sales_Price ~ Zoning + log_Lot_Area + Lot_Config + Overall_Qual + Bsmt_SF + Central_Air +
+      log_First_Flr_SF + Second_Flr_SF + Full_Bath + Half_Bath + Bedrooms + Kitchen +
+      Fireplaces + Garage_Cars,
+    data = amesHousingFactored
+  )
+summary(model3)
+
+newdata <- data.frame("log_Lot_Area" = log10(20000), "log_First_Flr_SF" = log10(4500), "Garage_Cars" = 3, 
+                      "Bedrooms" = 4, "Full_Bath" = 2, "Half_Bath" = 1, "Fireplaces" = 1, 
+                      "Bsmt_SF" = 0, "Kitchen" = 1, "Second_Flr_SF" = 0, "Central_Air" = "Y",
+                      "Overall_Qual" = "Excellent", "Zoning" = "Medium_Density", "Lot_Config" = "CulDSac")
+
+
+#Predict from Clay's last-minute model
+yhat <- predict(model3, newdata=newdata)
+
+predSalesPrice = 10^yhat
+
+stdError <- summary(model3)$sigma
+upperConfValue <- 10^(yhat + 2*stdError)
+lowerConfValue <- 10^(yhat - 2*stdError)
+
+cat("Predicted Sales Price: ", predSalesPrice)
+cat("Standard Error: ", stdError)
+cat("95% Confidence Range: ", upperConfValue, lowerConfValue)

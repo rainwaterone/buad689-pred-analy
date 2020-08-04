@@ -41,6 +41,7 @@ for(p in requiredPackages){
 
 Import the data file that has quarterly percentage changes in US consumption expenditure data and name it as "us.perchange"
 
+```{r}
 us.perchange <- 
   read.csv('US.perchange.csv')
 ```
@@ -114,3 +115,10 @@ Verifying the above model involves generating ACF and PACF plots of the residual
 checkresiduals(uschange.fit2)
 ```
 The large *p*-value indicates that the autocorrelation of the residuals is not significant.
+
+## Forecast with the ARIMA model
+
+```{r}
+uschange.fit %>% forecast(h=8) %>% autoplot(include=80)
+print(uschange.fit)
+```
