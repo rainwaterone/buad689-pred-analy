@@ -34,8 +34,8 @@ for(p in requiredPackages){
   library(p,character.only = TRUE)
 }
 
-workingDir = 'C:/Users/rainwater-e/OneDrive - Texas A&M University/Summer-2020/buad689-pred-analy/final/'
-setwd(workingDir)
+# workingDir = 'C:/Users/rainwater-e/OneDrive - Texas A&M University/Summer-2020/buad689-pred-analy/final/'
+# setwd(workingDir)
 
 ```
 
@@ -47,7 +47,7 @@ Import the data file that has quarterly percentage changes in US consumption exp
 
 ```{r} 
 us.perchange <- 
-  read.csv('C:/Users/rainwater-e/OneDrive - Texas A&M University/Summer-2020/buad689-pred-analy/class-10/US.perchange.csv')
+  read.csv('US.perchange.csv')
 ```
 
 ## Format your data into time series
