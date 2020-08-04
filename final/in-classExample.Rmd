@@ -27,7 +27,7 @@ requiredPackages = c(
   'rattle', 'RGtk2', 'rpart', 'tidytable',
   'tidyverse', 'MASS', 'ISwR',
   "astsa", "magrittr", "Hmisc",
-  "tidyverse", "psych"
+  "tidyverse", "psych", "sarima"
 )
 for(p in requiredPackages){
   if(!require(p,character.only = TRUE)) install.packages(p)
@@ -116,8 +116,7 @@ checkresiduals(uschange.fit2)
 ```
 The large *p*-value indicates that the autocorrelation of the residuals is not significant.
 
-## Forecast with the ARIMA model
-
+## Use a model fit to forcast the next 8 quarters
 ```{r}
 uschange.fit %>% forecast(h=8) %>% autoplot(include=80)
 print(uschange.fit)
