@@ -54,7 +54,7 @@ us.perchange <-
 Create time series data with quarterly data starting from January, 1970:
 ```{r}
 uschange.ts <- ts(us.perchange, start=c(1970,1), frequency = 4)
-print(uschange.ts)
+head(uschange.ts)
 ```
 ## Time Series Decomposition
 
