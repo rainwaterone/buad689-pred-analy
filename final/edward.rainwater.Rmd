@@ -1,0 +1,376 @@
+---
+title: "BUAD 689 Final"
+author: "Edward L. Rainwater"
+date: "8/4/2020"
+output: pdf_document
+---
+```{r GlobalOptions,echo=FALSE}
+options(knitr.duplicate.label = 'allow')
+```
+
+```{r setup, include=FALSE}
+
+
+knitr::opts_chunk$set(echo = TRUE)
+
+requiredPackages = c(
+  "naivebayes", "magrittr", "colorspace",
+  "tidyverse", "ggplot2",  "e1071",
+  "caretEnsemble",  "psych", "Amelia",
+  "Rcpp", "mice", "GGally",
+  "rpart", "corrplot", "readr",
+  "tseries", "forecast", "fpp2",
+  "fma", "expsmooth", "astsa",
+  "stats", "MARSS", "datasets",
+  "rsample", "dplyr", "ggplot2",
+  "caret", "naivebayes",
+  "klaR", 'cairoDevice', 'car',
+  'caret', 'EnvStats', 'randomForest',
+  'rattle', 'RGtk2', 'rpart', 'tidytable',
+  'tidyverse', 'MASS', 'ISwR',
+  "astsa", "magrittr", "Hmisc",
+  "tidyverse", "psych", "sarima"
+)
+for(p in requiredPackages){
+  if(!require(p,character.only = TRUE)) install.packages(p)
+  library(p,character.only = TRUE)
+}
+
+# workingDir = 'C:/Users/rainwater-e/OneDrive - Texas A&M University/Summer-2020/buad689-pred-analy/final/'
+# setwd(workingDir)
+
+```
+
+
+## Linear Regression
+
+Import the regression data file:
+
+```{r}
+fname         <- "LinearRegression.csv" 
+crs$dataset <- read.csv(fname,
+			na.strings=c(".", "NA", "", "?"),
+			strip.white=TRUE, encoding="UTF-8")
+
+```
+
+
+```{r echo=FALSE, message=FALSE}
+set.seed(crv$seed)
+
+crs$nobs <- nrow(crs$dataset)
+
+crs$train <- sample(crs$nobs, 0.7*crs$nobs)
+
+crs$nobs %>%
+  seq_len() %>%
+  setdiff(crs$train) %>%
+  sample(0.15*crs$nobs) ->
+crs$validate
+
+crs$nobs %>%
+  seq_len() %>%
+  setdiff(crs$train) %>%
+  setdiff(crs$validate) ->
+crs$test
+
+# The following variable selections have been noted.
+
+crs$input     <- c("Price", "Mileage", "Make", "Model", "Type",
+                   "Cylinder", "Liter", "Doors")
+
+crs$numeric   <- c("Price", "Mileage", "Cylinder", "Liter",
+                   "Doors")
+
+crs$categoric <- c("Make", "Model", "Type")
+
+crs$target    <- "Leather"
+crs$risk      <- NULL
+crs$ident     <- NULL
+crs$ignore    <- NULL
+crs$weights   <- NULL
+```
+# 1. Generate Histograms
+
+```{r}
+p01 <- crs %>%
+  with(dataset[train,]) %>%
+  dplyr::mutate(Make=as.factor(Make)) %>%
+  dplyr::select(Price, Make) %>%
+  ggplot2::ggplot(ggplot2::aes(x=Price)) +
+  ggplot2::geom_density(lty=3) +
+  ggplot2::geom_density(ggplot2::aes(fill=Make, colour=Make), alpha=0.55) +
+  ggplot2::xlab("Price\n\nRattle 2020-Aug-04 18:23:57 rainwater-e") +
+  ggplot2::ggtitle("Distribution of Price (sample)\nby Make") +
+  ggplot2::labs(fill="Make", y="Density")
+
+p02 <- crs %>%
+  with(dataset[train,]) %>%
+  dplyr::mutate(Make=as.factor(Make)) %>%
+  dplyr::select(Mileage, Make) %>%
+  ggplot2::ggplot(ggplot2::aes(x=Mileage)) +
+  ggplot2::geom_density(lty=3) +
+  ggplot2::geom_density(ggplot2::aes(fill=Make, colour=Make), alpha=0.55) +
+  ggplot2::xlab("Mileage\n\nRattle 2020-Aug-04 18:23:58 rainwater-e") +
+  ggplot2::ggtitle("Distribution of Mileage (sample)\nby Make") +
+  ggplot2::labs(fill="Make", y="Density")
+
+p03 <- crs %>%
+  with(dataset[train,]) %>%
+  dplyr::mutate(Make=as.factor(Make)) %>%
+  dplyr::select(Cylinder, Make) %>%
+  ggplot2::ggplot(ggplot2::aes(x=Cylinder)) +
+  ggplot2::geom_density(lty=3) +
+  ggplot2::geom_density(ggplot2::aes(fill=Make, colour=Make), alpha=0.55) +
+  ggplot2::xlab("Cylinder\n\nRattle 2020-Aug-04 18:23:58 rainwater-e") +
+  ggplot2::ggtitle("Distribution of Cylinder (sample)\nby Make") +
+  ggplot2::labs(fill="Make", y="Density")
+
+gridExtra::grid.arrange(p01, p02, p03)
+```
+# Histogram Observations
+
+- Price: Cadillacs have a very broad price distribution, slightly right-skewed.
+- Mileage: All makes have very similar means of around 25,000 mi.
+- Cylinders: Cadillacs have predominately 8-cylinder engines, while Chevrolets have predominately 4-cylinder engines. The other makes most predominately have 6-cylinder engines.
+
+
+```{r}
+LinearRegression <- 
+  read.table("C:/Users/rainwater-e/OneDrive - Texas A&M University/Summer-2020/buad689-pred-analy/final/LinearRegression.csv",
+             header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
+
+```
+# 2. Perform Linear Regression of *Type* against *Price*
+
+```{r}
+LinearModel.Type.Price <- lm(Price ~ Type, data=LinearRegression)
+summary(LinearModel.Type.Price)
+```
+The coefficient “TypeHatchback” has the value, -26,376, which means that, averaged over all configurations and makes, the average price of a hatchback is $26,376 less than the average price of a convertible (which is the default factor, with a mean price of $40,501). Thus, the average price of a hatchback  = $40,501 - $26,376 = $14,125.
+
+# Create an Interaction Term for Mileage and Cylinder
+```{r}
+LinearModel.MileageCylInt <- lm(Price ~ Mileage*Cylinder, data=LinearRegression)
+summary(LinearModel.MileageCylInt)
+```
+The interaction term Mileage:Cylinder is statistically significant with a test value of less than .05. It represents how the product of mileage and cylinders reduces the mean price of the vehicle by .05334 dollars per cylinder*mile.
+
+For a mileage of 20,000, each individual cylinder causes a price change of (-.05334)*(20000) = -1,106.8
+
+# 3. Log Transform Price and Mileage
+```{r}
+LinearRegression$Log.price <- with(LinearRegression, log(Price))
+LinearRegression$Log.mileage <- with(LinearRegression, log(Mileage))
+```
+
+# Create Scatterplots with Regression Lines:
+
+```{r}
+
+scatterplot(Price~Mileage, regLine=TRUE, smooth=FALSE, boxplots=FALSE, 
+  data=LinearRegression)
+
+scatterplot(Mileage~Log.price, regLine=TRUE, smooth=FALSE, boxplots=FALSE, 
+  data=LinearRegression)
+
+scatterplot(Log.mileage~Price, regLine=TRUE, smooth=FALSE, boxplots=FALSE, 
+  data=LinearRegression)
+
+scatterplot(Log.mileage~Log.price, regLine=TRUE, smooth=FALSE, boxplots=FALSE, 
+  data=LinearRegression)
+
+
+```
+Of the four plots, the Mileage vs. Log.price exhibits the best linear relationship because the residuals are most evenly distributed about the trend line. Thus, the Mileage-Log.price model exhibits the least heteroscedasticity.
+
+# 4. Regression and Price Prediction
+Since the question states, *"Using your answer for Question 3b"*, I will assume that the intent is to run a regression with all variables against $log(Price)$.
+
+```{r}
+LinearModel.log.price <- lm(Log.price ~ Cylinder + Doors + Leather + Liter 
+  + Mileage + Make + Model + Type, data=LinearRegression)
+summary(LinearModel.log.price)
+```
+# Model Summary
+Of the models run, the model using all factors against the log-transformed *Price* produces the highest $R^2$ value, $R^2 = 0.9757$. Using the above coefficients, the estimated price of a car with the following parameters:
+
+|Mileage|	5239|
+|Make|	Chevrolet|
+|Model|	Corvette|
+|Type|	Convertible|
+|Cylinder|	8|
+|Liter|	6|
+|Doors|	2|
+|Leather|	1|
+
+$log(Price) = 9.84315 + (-0.0000079634)(Mileage) + (-0.4438)(Make[T.Chevrolet]) + (0.5213)(Model[T.Corvette]) + (-0.0191)(Cylinders) + (0.1820)(Liters) + (-0.0488)(Doors) + (0.0212364053)(Leather)$
+
+Which, when the table values are substituted:
+
+$log(Price) = 9.84315 + (-0.0000079634)(5239) + (-0.4438)(1) + (0.5213)(1) + (-0.0191)(8) + (0.1820)(6) + (-0.0488)(2) + (0.0212364053)(1) = 10.74177$
+
+Taking the antilog of the above, $e^10.74177 = \$46,247.64$
+
+The 95\% prediction intervals are $e^{10.74177 +/- 0.06027} = \$(43543, 49121)$
+
+## Time Series Forecasting
+Import the file and create a time series:
+```{r}
+us.perchange <- read.csv("TimeSeries.csv")
+uschange.ts <- ts (us.perchange, frequency=12)
+```
+
+
+<!-- Time series decomposition involves considering the series as an additive combination of level, trend, seasonality, and noise components. -->
+
+<!-- - Level: The mean of the series -->
+<!-- - Trend: The increase or decrease in the local mean over time -->
+<!-- - Seasonality: The repeating short-term cycle in the series -->
+<!-- - Noise: The random variation in the series -->
+
+```{r, echo=TRUE}
+autoplot(decompose(uschange.ts))
+```
+# 1. General Observations:
+Run a regression to determine if there is a trend in the data:
+
+```{r}
+uschange.Reg <- lm(uschange.ts~time(uschange.ts))
+summary(uschange.Reg)
+```
+The slope of *time* has a non-significatn test value, indicating that there is no significant trend.
+
+# 2. Seasonality
+
+Based upon the *seasonal* plot above, the series appears to have a seasonality with a lag of 2.
+
+# 3. Autocorrelations
+Generating ACF and PACF plots:
+```{r}
+ggAcf(uschange.ts, lag.max = 58)
+ggPacf(uschange.ts, lag.max = 58)
+```
+- The ACF plot shows an order of 15, dies out, then exhibits some seasonal behavior. Thus, there are some significant autocorrelations
+- The PACF plot shows several locations of significant negative lag.
+
+# 4. Fit an Auto ARIMA:
+```{r}
+uschange.fit <- auto.arima(uschange.ts, seasonal=FALSE)
+summary(uschange.fit)
+```
+The above `auto.arima` model shows $p = 1$ and $q = 4$.
+
+# Residuals
+
+The residuals are now plotted:
+```{r}
+checkresiduals(uschange.fit)
+```
+The residuals for this model have a lag of 8, indicating that there is an unaccounted autocorrelation in this model.
+
+<!-- The values of *p, d,* and *q* are returned as a tuple, denoted above as `ARIMA(1,0,3)`. -->
+
+<!-- ## Determining Lags using ACF and PACF -->
+
+<!-- - ACF - AutoCorrelation Function - determines the number of lags that are significant indicators of autocorrelation. This value, *p* is the order of autocorrelation. -->
+<!-- - PACF - Partial AutoCorrelation function - determines the number correlation of observations that are exactly *k* time steps apart. Here, we are looking for the number of lags for which there are negative PACF 
+
+<!-- It can be seen in the ACF plot above that lags 1, 2, and 3 are autogressive, therefore, the order is $p = 3$. Now, the PACF plot will be generated: -->
+
+<!-- ```{r} -->
+
+<!-- ``` -->
+<!-- In the PACF plot above, we are looking for lags in which the PACF value is both significant and negative. Since there are none, the moving average term, $q = 0$. -->
+
+<!-- Now, we will run an ARIMA model using $(p, d, q) = (3, 0, 0)$ as determined above: -->
+<!-- ```{r} -->
+<!-- uschange.fit2 <- (Arima(uschange.ts, order=c(3,0,0))) -->
+<!-- summary(uschange.fit2) -->
+<!-- ``` -->
+<!-- We need to do some reading up to determine how to best interpret the above.  -->
+
+<!-- ## Residuals of the ARIMA Model -->
+
+<!-- Verifying the above model involves generating ACF and PACF plots of the residuals to verify that none of them have significant ACF or PACF values. -->
+<!-- The large *p*-value indicates that the autocorrelation of the residuals is not significant. -->
+
+<!-- ## Use a model fit to forcast the next 8 quarters -->
+<!-- ```{r} -->
+<!-- uschange.fit %>% forecast(h=8) %>% autoplot(include=80) -->
+<!-- print(uschange.fit) -->
+<!-- ``` -->
+
+
+## Naive Bayes Classification
+Import the data:
+```{r}
+hrdata <- read.csv("NaiveBayes.csv")
+```
+Exploring the data:
+```{r}
+head(hrdata)
+str(hrdata)
+summary(hrdata)
+```
+# 1. Creating Train and Test Data
+
+```{r}
+table(hrdata$status) %>% prop.table()
+```
+Approximately 69\% of observations are placed.
+
+Encode non-binary categorical factors:
+```{r}
+hrdata <- hrdata %>%
+  mutate(
+    hsc_s = factor(hsc_s),
+    degree_t = factor(degree_t),
+    )
+```
+
+Now, create the train/test split:
+```{r}
+set.seed(123)
+split <- initial_split(hrdata, prop = .8, strata = "status")
+train <- training(split)
+test  <- testing(split)
+table(train$status) %>% prop.table()
+```
+After stratified sampling, our test data has a placement rate of approximately 69\%.
+
+# 2. Define Response \& Features
+```{r}
+features <- setdiff(names(train), "status") 
+x <- train[, features]
+y <- train$status
+
+```
+# 3. Train the model with 10-fold cross-validation
+```{r, message=FALSE}
+train_control <- trainControl(
+  method = "cv", 
+  number = 10
+)
+```
+
+```{r, message=FALSE, echo=TRUE, warning=FALSE}
+nb.m1 <- train(
+  x = x, #The names of our feature columns
+  y = y, #The name of our target
+  method = "nb",
+  trControl = train_control #The name of the list to which we assigned our trainControl parameters
+)
+
+```
+
+
+Display the confusion matrix:
+```{r}
+confusionMatrix(nb.m1)
+```
+The average accuracy is 85\%.
+
+```{r, echo = FALSE, message=FALSE}
+knitr::purl('edward.rainwater.Rmd') # Generate a standard R script file
+```

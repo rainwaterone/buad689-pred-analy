@@ -32,7 +32,7 @@ library(ggplot2)  # data visualization
 library(caret)    # implementing with caret
 
 # Import your data file 
-hrdata <- read.csv("/Users/aangelus/Documents/R.data/IBMHRAttrition.csv")
+hrdata <- read.csv("IBMHRAttrition.csv")
 
 ## Data exploration ----
 View(hrdata)
@@ -131,22 +131,25 @@ table(test$Quit) %>% prop.table()
 ##The features (all predictors,x1,x2,..xp in your data set) are what we will use, to model the prediction.
 # this is to create response and feature data
 
-features <- setdiff(names(train), "Quit")
+
+# setdiff() returns a list of the names in train that are not 'Quit'. 
+# In other words, the names of all the explanatory features
+features <- setdiff(names(train), "Quit") 
 x <- train[, features]
 y <- train$Quit
 
-# set up 10-fold cross validation procedure
+# Set up 10-fold cross validation procedure. trainControl sets parameters for the train function
 train_control <- trainControl(
   method = "cv", 
   number = 10
 )
 
-# train your very first Naive Bayes Model
+# train your very second Naive Bayes Model
 nb.m1 <- train(
   x = x, #The names of our feature columns
   y = y, #The name of our target
   method = "nb",
-  trControl = train_control
+  trControl = train_control #The name of the list to which we assigned our trainControl parameters
 )
 
 # results
@@ -163,7 +166,7 @@ confusionMatrix(nb.m1)
 ##                             
 ##  Accuracy (average) : 0.8456
 
-# set up tuning grid
+# Set up tuning grid. expand.grid creates a dataframe from all combinations of the supplied vectors or values
 search_grid <- expand.grid(
   usekernel = c(TRUE, FALSE),
   fL = 0:5,

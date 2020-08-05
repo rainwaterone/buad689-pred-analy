@@ -1,0 +1,137 @@
+---
+title: "BUAD 689 Final Exam"
+author: "Edward L. Rainwater"
+date: "AUTOMATIC"
+---
+
+
+```{r echo=FALSE, message=FALSE}
+# include this code chunk as-is to set options
+knitr::opts_chunk$set(comment=NA, prompt=TRUE)
+library(Rcmdr)
+library(car)
+library(RcmdrMisc)
+```
+
+
+```{r echo=FALSE}
+# include this code chunk as-is to enable 3D graphs
+library(rgl)
+knitr::knit_hooks$set(webgl = hook_webgl)
+```
+
+
+```{r}
+LinearRegression <- 
+  read.table("C:/Users/rainwater-e/OneDrive - Texas A&M University/Summer-2020/buad689-pred-analy/final/LinearRegression.csv",
+   header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
+```
+
+```{r}
+LinearModel.Type.Price <- lm(Price ~ Type, data=LinearRegression)
+```
+
+
+```{r}
+summary(LinearModel.Type.Price)
+```
+
+
+```{r}
+LinearModel.2 <- lm(Price ~ Mileage*Cylinder, data=LinearRegression)
+summary(LinearModel.2)
+```
+
+```{r}
+LinearModel.MileageCylInt <- lm(Price ~ Mileage*Cylinder, 
+  data=LinearRegression)
+```
+
+
+```{r}
+summary(LinearModel.2)
+```
+
+
+```{r}
+scatterplot(Price~Mileage, regLine=TRUE, smooth=FALSE, boxplots=FALSE, 
+  data=LinearRegression)
+```
+
+```{r}
+{scatterplot(Price~Mileage, regLine=TRUE, smooth=FALSE, boxplots=FALSE,
+} {data=LinearRegression)
+}```
+
+```{r}
+{scatterplot(Price~Mileage, regLine=TRUE, smooth=FALSE, boxplots=FALSE,
+} {data=LinearRegression)
+}```
+
+
+```{r}
+{scatterplot(Price~Mileage, regLine=TRUE, smooth=FALSE, boxplots=FALSE,
+} {data=LinearRegression)
+}```
+
+```{r}
+scatterplot(Mileage~Log.price, regLine=FALSE, smooth=FALSE, boxplots=FALSE, 
+  data=LinearRegression)
+```
+
+
+```{r}
+scatterplot(Log.mileage~Price, regLine=TRUE, smooth=FALSE, boxplots=FALSE, 
+  data=LinearRegression)
+```
+
+```{r}
+{scatterplot(Log.mileage~Price, regLine=TRUE, smooth=FALSE, boxplots=FALSE,
+} {data=LinearRegression)
+}```
+
+
+```{r}
+{scatterplot(Log.mileage~Log.price, regLine=TRUE, smooth=FALSE, 
+  boxplots=FALSE,
+} {data=LinearRegression)
+  
+}```
+
+```{r}
+LinearModel.log.price <- lm(Log.price ~ Cylinder + Doors + Leather + Liter 
+  + Mileage + Make + Model + Type, data=LinearRegression)
+summary(LinearModel.log.price)
+```
+
+```{r}
+{LinearModel.log.price <- lm(Log.price ~ Cylinder + Doors + Leather + Liter
+} {+ Mileage + Make + Model + Type, data=LinearRegression)
+}```
+
+
+```{r}
+summary(LinearModel.log.price)
+```
+
+
+```{r}
+{LinearModel.log.price <- glm(Log.price ~ Cylinder + Doors + Leather + Liter
+} {+ Mileage + Make + Model + Type, data=LinearRegression)
+}```
+
+
+```{r}
+summary(LinearModel.log.price)
+```
+
+```{r}
+summary(LinearModel.log.price)
+```
+
+
+```{r}
+summary(LinearModel.log.price)
+```
+
+
